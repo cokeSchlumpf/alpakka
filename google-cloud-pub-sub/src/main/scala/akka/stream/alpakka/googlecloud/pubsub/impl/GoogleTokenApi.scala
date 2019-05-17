@@ -9,6 +9,7 @@ import akka.http.scaladsl.model.{FormData, HttpMethods, HttpRequest}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import GoogleTokenApi._
+import akka.actor.ActorSystem
 import akka.annotation.InternalApi
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
@@ -33,7 +34,7 @@ private[googlecloud] class GoogleTokenApi(http: => HttpExt) {
   }
 
   def getAccessToken(clientEmail: String, privateKey: String)(
-      implicit materializer: Materializer
+    implicit as: ActorSystem, materializer: Materializer
   ): Future[AccessTokenExpiry] = {
     import materializer.executionContext
     import SprayJsonSupport._
@@ -47,7 +48,7 @@ private[googlecloud] class GoogleTokenApi(http: => HttpExt) {
     ).toEntity
 
     for {
-      response <- http.singleRequest(HttpRequest(HttpMethods.POST, googleTokenUrl, entity = requestEntity))
+      response <- PubSubRequest.singleRequest(HttpRequest(HttpMethods.POST, googleTokenUrl, entity = requestEntity))
       result <- Unmarshal(response.entity).to[OAuthResponse]
     } yield {
       AccessTokenExpiry(

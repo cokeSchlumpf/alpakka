@@ -110,7 +110,7 @@ private[pubsub] trait PubSubApi {
   }
 
   private[this] def doRequest(request: HttpRequest, maybeAccessToken: Option[String])(implicit as: ActorSystem) =
-    Http().singleRequest(
+    PubSubRequest.singleRequest(
       maybeAccessToken.map(accessToken => request.addCredentials(OAuth2BearerToken(accessToken))).getOrElse(request)
     )
 
